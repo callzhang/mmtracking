@@ -1,28 +1,30 @@
 from argparse import ArgumentParser
 
-import cv2
+import cv2, torch
 
 from mmtrack.apis import inference_sot, init_model
 
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('config', help='Config file')
-    parser.add_argument('--input', help='input video file')
-    parser.add_argument('--output', help='output video file (mp4 format)')
+    parser.add_argument(
+        '--config', default='configs/sot/siamese_rpn/siamese_rpn_r50_1x_lasot.py', help='Config file')
+    parser.add_argument('--input', default='demo/video_10s.mp4',
+        help='input video file')
+    parser.add_argument('--output', default='output/sot.mp4', help='output video file (mp4 format)')
     parser.add_argument('--checkpoint', help='Checkpoint file')
     parser.add_argument(
-        '--device', default='cuda:0', help='Device used for inference')
+        '--device', default=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),  help='Device used for inference')
     parser.add_argument(
         '--show',
         action='store_true',
-        default=False,
         help='whether to show visualizations.')
     parser.add_argument(
         '--color', default=(0, 255, 0), help='Color of tracked bbox lines.')
     parser.add_argument(
         '--thickness', default=3, type=int, help='Thickness of bbox lines.')
     args = parser.parse_args()
+    args.device = 'cpu'
 
     # build the model from a config file and a checkpoint file
     model = init_model(args.config, args.checkpoint, device=args.device)
@@ -53,7 +55,7 @@ def main():
         # test a single image
         result = inference_sot(model, frame, init_bbox, frame_id)
 
-        track_bbox = result['bbox']
+        track_bbox = result['bbox'].astype('int')
         cv2.rectangle(
             frame, (track_bbox[0], track_bbox[1]),
             (track_bbox[2], track_bbox[3]),

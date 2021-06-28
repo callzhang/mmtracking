@@ -1,4 +1,4 @@
-import os
+import os, torch
 import os.path as osp
 import tempfile
 from argparse import ArgumentParser
@@ -10,13 +10,16 @@ from mmtrack.apis import inference_mot, init_model
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument('config', help='config file')
-    parser.add_argument('--input', help='input video file or folder')
-    parser.add_argument(
-        '--output', help='output video file (mp4 format) or folder')
+    parser.add_argument('--config', default='configs/mot/deepsort/sort_faster-rcnn_fpn_4e_mot17-private.py',
+        help='config file')
+    parser.add_argument('--input', default='demo/video.mp4',
+        help='input video file or folder')
+    parser.add_argument('--output', default='output/mot.mp4',
+        help='output video file (mp4 format) or folder')
     parser.add_argument('--checkpoint', help='checkpoint file')
     parser.add_argument(
-        '--device', default='cuda:0', help='device used for inference')
+        '--device', default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'), 
+        help='device used for inference')
     parser.add_argument(
         '--show',
         action='store_true',

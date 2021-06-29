@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 
 import cv2, torch
-
+from tqdm import tqdm
 from mmtrack.apis import inference_sot, init_model
 
 
@@ -12,19 +12,20 @@ def main():
     parser.add_argument('--input', default='demo/video_10s.mp4',
         help='input video file')
     parser.add_argument('--output', default='output/sot.mp4', help='output video file (mp4 format)')
-    parser.add_argument('--checkpoint', help='Checkpoint file')
+    parser.add_argument('--checkpoint', default='models/siamese_rpn_r50_1x_lasot_20201218_051019-3c522eff.pth',
+                        help='Checkpoint file')
     parser.add_argument(
         '--device', default=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),  help='Device used for inference')
     parser.add_argument(
         '--show',
         action='store_true',
+        # default=True,
         help='whether to show visualizations.')
     parser.add_argument(
         '--color', default=(0, 255, 0), help='Color of tracked bbox lines.')
     parser.add_argument(
         '--thickness', default=3, type=int, help='Thickness of bbox lines.')
     args = parser.parse_args()
-    args.device = 'cpu'
 
     # build the model from a config file and a checkpoint file
     model = init_model(args.config, args.checkpoint, device=args.device)
@@ -37,11 +38,14 @@ def main():
         fps = cap.get(cv2.CAP_PROP_FPS)
         size = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                 int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         videoWriter = cv2.VideoWriter(args.output, fourcc, fps, size)
 
     frame_id = 0
-    while (cap.isOpened()):
+    # while (cap.isOpened()):
+    for i in tqdm(range(frames)):
+        assert cap.isOpened()
         flag, frame = cap.read()
         if not flag:
             break
@@ -77,7 +81,7 @@ def main():
     if save_out_video:
         videoWriter.release()
     cv2.destroyAllWindows()
-
+    print('finished')
 
 if __name__ == '__main__':
     main()
